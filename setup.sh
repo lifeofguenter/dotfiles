@@ -2,7 +2,7 @@
 
 readlink_bin="${READLINK_PATH:-readlink}"
 if ! "${readlink_bin}" -f test &> /dev/null; then
-  __DIR__="$(dirname "$("${readlink_bin}" "${0}")")"
+  __DIR__="$(python -c "import os,sys; print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${0}")"
 else
   __DIR__="$(dirname "$("${readlink_bin}" -f "${0}")")"
 fi
@@ -19,7 +19,7 @@ bash_completion_version=2.8
 minishift_version=1.16.1
 
 install_bash_powerline() {
-  curl -#Lo "~/.bash-powerline.sh" "https://raw.githubusercontent.com/riobard/bash-powerline/master/bash-powerline.sh"
+  curl -#Lo ~/".bash-powerline.sh" "https://raw.githubusercontent.com/riobard/bash-powerline/master/bash-powerline.sh"
 }
 
 install_bash_completion() {

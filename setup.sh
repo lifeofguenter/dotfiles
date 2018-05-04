@@ -2,7 +2,7 @@
 
 readlink_bin="${READLINK_PATH:-readlink}"
 if ! "${readlink_bin}" -f test &> /dev/null; then
-  __DIR__="$(python -c "import os,sys; print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${0}")"
+  __DIR__="$(dirname "$(python -c "import os,sys; print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${0}")")"
 else
   __DIR__="$(dirname "$("${readlink_bin}" -f "${0}")")"
 fi

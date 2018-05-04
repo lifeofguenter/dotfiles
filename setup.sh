@@ -96,6 +96,8 @@ EOF
 ################################################################################
 consolelog "setting up bash_completion..."
 
+chsh -s /usr/local/bin/bash
+
 if [[ ! -f /usr/local/share/bash-completion/bash_completion ]]; then
   consolelog "bash-completion not found. installing..."
   install_bash_completion
@@ -122,7 +124,7 @@ dotfiles=(
   .bashrc
   .profile
 )
-  
+
 for dotfile in "${dotfiles[@]}"; do
   consolelog "overwriting dotfile ${dotfile}..."
   cp -f "${__DIR__}/${dotfile}" ~/"${dotfile}"

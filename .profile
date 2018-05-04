@@ -44,7 +44,9 @@ PATH="/Library/Frameworks/Python.framework/Versions/3.6/bin:${PATH}"
 export PATH="${PATH}"
 
 # Rust
-source "${HOME}/.cargo/env"
+if [[ -f ~/.cargo/env ]]; then
+  source ~/.cargo/env
+fi
 
 # PHP
 ## Composer

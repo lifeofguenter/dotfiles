@@ -17,6 +17,27 @@ trap 'throw_exception' ERR
 #
 bash_completion_version=2.8
 minishift_version=1.16.1
+readline_version=7.0
+bash_version=4.4.18
+
+install_bash() {
+  cd /tmp
+  curl -#LO "https://ftp.gnu.org/gnu/readline/readline-${readline_version}.tar.gz"
+  tar xf "readline-${readline_version}.tar.gz"
+  cd "readline-${readline_version}"
+  ./configure > /dev/null
+  make -j4 > /dev/null
+  sudo make -s install
+
+  curl -#LO "https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz"
+  tar xf "bash-${bash_version}.tar.gz"
+  cd "bash-${bash_version}"
+  CFLAGS=-DSSH_SOURCE_BASHRC ./configure > /dev/null
+  make -j4 > /dev/null
+  sudo make -s install
+
+  sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
+}
 
 install_bash_powerline() {
   curl -#Lo ~/".bash-powerline.sh" "https://raw.githubusercontent.com/riobard/bash-powerline/master/bash-powerline.sh"
@@ -28,22 +49,25 @@ install_bash_completion() {
   tar xf "bash-completion-${bash_completion_version}.tar.xz"
   cd "bash-completion-${bash_completion_version}/"
   ./configure > /dev/null
-  make
-  sudo make install
+  make > /dev/null
+  sudo make -s install
 }
 
 install_oc() {
   cd /tmp
   curl -#LO "https://github.com/openshift/origin/releases/download/v3.9.0/openshift-origin-client-tools-v3.9.0-191fece-mac.zip"
   unzip -q openshift-origin-client-tools-v3.9.0-191fece-mac.zip
-
 }
 
 install_minishift() {
   cd /tmp
   curl -#LO "https://github.com/minishift/minishift/releases/download/v${minishift_version}/minishift-${minishift_version}-darwin-amd64.tgz"
   tar xf "minishift-${minishift_version}-darwin-amd64.tgz"
+}
 
+install_screenshots() {
+  mkdir -p ~/Screenshots
+  defaults write com.apple.screencapture location ~/Screenshots
 }
 
 ################################################################################
@@ -94,9 +118,11 @@ EOF
 ################################################################################
 # setup bash_completion
 ################################################################################
-consolelog "setting up bash_completion..."
-
-chsh -s /usr/local/bin/bash
+if [[ ! -f "/usr/local/bin/bash" ]]; then
+  consolelog "installing bash..."
+  install_bash
+  chsh -s /usr/local/bin/bash
+fi
 
 if [[ ! -f /usr/local/share/bash-completion/bash_completion ]]; then
   consolelog "bash-completion not found. installing..."
@@ -116,6 +142,8 @@ if command -v minishift > /dev/null; then
   minishift completion bash > ~/.bash_completion.d/minishift
 fi
 
+install_screenshots
+
 ################################################################################
 # dotfiles overwrite
 ################################################################################
@@ -123,6 +151,7 @@ dotfiles=(
   .bash_profile
   .bashrc
   .profile
+  .tm_properties
 )
 
 for dotfile in "${dotfiles[@]}"; do

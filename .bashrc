@@ -164,4 +164,4 @@ export NVM_DIR="$HOME/.nvm"
 [ ! -s "$NVM_DIR/bash_completion" ] || \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # added by travis gem
-[ -f ~/.travis/travis.sh ] && source ~/.travis/travis.sh
+[ ! -s ~/.travis/travis.sh ] || source ~/.travis/travis.sh

@@ -1,2 +1,11 @@
 include = "{$include,.*}"
 exclude = "{$exclude,.git}"
+softTabs = true
+tabSize = 2
+
+[ *.php ]
+tabSize = 4
+
+[ Makefile ]
+softTabs = false
+tabSize = 4

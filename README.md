@@ -27,3 +27,7 @@ DOTFILES_INSTALL_MINISHIFT=1
 
 * [draculatheme](https://draculatheme.com/)
 * [iterm2 profile/config](extras/com.googlecode.iterm2.plist)
+
+## Todos
+
+* git (git config --global user.signingkey / git config --global user.name / git config --global user.email)

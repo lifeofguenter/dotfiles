@@ -70,6 +70,10 @@ install_screenshots() {
   defaults write com.apple.screencapture location ~/Screenshots
 }
 
+install_showallfiles() {
+  defaults write com.apple.finder AppleShowAllFiles YES
+}
+
 ################################################################################
 # install various tools
 ################################################################################
@@ -143,6 +147,7 @@ if command -v minishift > /dev/null; then
 fi
 
 install_screenshots
+install_showallfiles
 
 ################################################################################
 # dotfiles overwrite

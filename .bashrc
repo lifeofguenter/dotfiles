@@ -1,5 +1,5 @@
 source ~/.bash-powerline.sh
-source /usr/local/share/bash-completion/bash_completion  
+source /usr/local/share/bash-completion/bash_completion
 
 for file in ~/.bash_completion.d/*; do
   if [[ ! -f "${file}" ]]; then
@@ -36,7 +36,7 @@ ssh-tunnel() {
   if [[ ! "${ip}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     ip="$(dig +short "${ip}" | tail -n1)"
   fi
- 
+
   ssh \
     -f \
     -o "ExitOnForwardFailure=yes" \
@@ -84,8 +84,24 @@ git-branch-delete() {
 }
 
 git-pr() {
-  git fetch --quiet upstream
-  git checkout --quiet -b "${1}" upstream/master
+  local remote
+  local branch_name
+
+  if [[ ! -z "${2}" ]]; then
+    remote="${2}"
+  else
+    remote="origin"
+  fi
+
+  # https://ORG.atlassian.net/browse/TICKET-ID
+  if [[ "${1}" =~ ^https://[^.]+.atlassian.net/browse/(.*)$ ]]; then
+    branch_name="${BASH_REMATCH[1]}"
+  else
+    branch_name="${1}"
+  fi
+
+  git fetch --quiet "${remote}"
+  git checkout --quiet -b "${branch_name}" "${remote}/master"
 }
 
 git-push-all() {
@@ -136,25 +152,29 @@ docker-parent() {
 }
 
 ecr-login() {
-  stat_bin="${STAT_PATH:-/usr/bin/stat}"
+  local account_id="$(aws --profile "${1}" --output json sts get-caller-identity | jq -r '.Account')"
+  local region="$(aws --profile "${1}" configure get region)"
+  local stat_file=~/.docker/aws_${account_id}_${region}
 
-  if ! grep -q ".dkr.ecr.eu-west-2.amazonaws.com" ~/.docker/config.json; then
-    $(aws --profile wi --region eu-west-2 ecr get-login --no-include-email) &> /dev/null
+  if ! grep -qF "${account_id}.dkr.ecr.${region}.amazonaws.com" ~/.docker/config.json; then
+    echo "ecr-login: ${account_id}@${region} [new]"
+    $(aws --profile "${1}" ecr get-login --no-include-email) &> /dev/null
   fi
 
-  if [[ ! -f ~/.docker/aws ]]; then
-    touch ~/.docker/aws
+  if [[ ! -f "${stat_file}" ]]; then
+    touch "${stat_file}"
   fi
 
-  local filemtime="$("${stat_bin}" -c %Y ~/.docker/aws)"
+  local filemtime="$(stat -f %m "${stat_file}")"
   local currtime="$(date +%s)"
   local diff="$(( currtime - filemtime ))"
 
   # https://docs.aws.amazon.com/cli/latest/reference/ecr/get-login.html
   # only valid for 12hrs
   if [[ "${diff}" -gt "39600" ]]; then
-    $(aws --profile wi --region eu-west-2 ecr get-login --no-include-email) &> /dev/null
-    touch ~/.docker/aws
+    echo "ecr-login: ${account_id}@${region} [refresh]"
+    $(aws --profile "${1}" ecr get-login --no-include-email) &> /dev/null
+    touch "${stat_file}"
   fi
 }
 #ecr-login

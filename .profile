@@ -37,8 +37,11 @@ PATH="/opt/apache-maven-3.5.2/bin:${PATH}"
 ## Android-SDK
 PATH="/opt/android-sdk/tools/bin:${PATH}"
 
-# Setting PATH for Python 3.6
-PATH="/Library/Frameworks/Python.framework/Versions/3.6/bin:${PATH}"
+# Setting PATH for Python 3.7
+PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
+
+# brew coreutils
+#PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
 
 # Final PATH export
 export PATH="${PATH}"

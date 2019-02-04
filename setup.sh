@@ -189,15 +189,15 @@ done
 ################################################################################
 # git
 ################################################################################
-if [[ -z "${git_email}" ]]; then
+if [[ ! -z "${git_email}" ]]; then
   git config --global user.email "${git_email}"
 fi
 
-if [[ -z "${git_user}" ]]; then
+if [[ ! -z "${git_user}" ]]; then
   git config --global user.name "${git_user}"
 fi
 
-if [[ -z "${git_gpg}" ]]; then
+if [[ ! -z "${git_gpg}" ]]; then
   git config --global commit.gpgsign true
   git config --global user.signingkey "${git_gpg}"
 fi

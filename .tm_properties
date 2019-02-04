@@ -9,3 +9,9 @@ tabSize = 4
 [ Makefile ]
 softTabs = false
 tabSize = 4
+
+[ *.csv ]
+scopeAttributes = attr.keep-whitespace attr.do-not-ensure-new-line
+
+[ *.yml ]
+scopeAttributes = attr.keep-whitespace attr.do-not-ensure-new-line

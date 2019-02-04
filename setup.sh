@@ -75,6 +75,13 @@ install_showallfiles() {
 }
 
 ################################################################################
+# user input
+################################################################################
+read -p 'git-user: ' git_user
+read -p 'git-email: ' git_email
+read -p 'git-gpg: ' git_gpg
+
+################################################################################
 # install various tools
 ################################################################################
 consolelog "installing tools..."
@@ -150,6 +157,21 @@ install_screenshots
 install_showallfiles
 
 ################################################################################
+# textmate
+################################################################################
+if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle ]]; then
+  git clone git@github.com:bomberstudios/Strip-Whitespace-On-Save.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle
+fi
+
+if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle ]]; then
+  git clone git@github.com:mads-hartmann/Whitespace.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle
+fi
+
+if [[ ! -d ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle ]]; then
+  git clone git@github.com:hajder/Ensure-New-Line-at-the-EOF.tmbundle.git ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle
+fi
+
+################################################################################
 # dotfiles overwrite
 ################################################################################
 dotfiles=(
@@ -163,5 +185,21 @@ for dotfile in "${dotfiles[@]}"; do
   consolelog "overwriting dotfile ${dotfile}..."
   cp -f "${__DIR__}/${dotfile}" ~/"${dotfile}"
 done
+
+################################################################################
+# git
+################################################################################
+if [[ -z "${git_email}" ]]; then
+  git config --global user.email "${git_email}"
+fi
+
+if [[ -z "${git_user}" ]]; then
+  git config --global user.name "${git_user}"
+fi
+
+if [[ -z "${git_gpg}" ]]; then
+  git config --global commit.gpgsign true
+  git config --global user.signingkey "${git_gpg}"
+fi
 
 ################################################################################

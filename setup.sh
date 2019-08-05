@@ -15,26 +15,13 @@ trap 'throw_exception' ERR
 #
 # versions
 #
-bash_completion_version=2.8
+bash_completion_version=2.9
 minishift_version=1.16.1
-readline_version=7.0
-bash_version=4.4.18
+
+uname="$(uname)"
 
 install_bash() {
-  cd /tmp
-  curl -#LO "https://ftp.gnu.org/gnu/readline/readline-${readline_version}.tar.gz"
-  tar xf "readline-${readline_version}.tar.gz"
-  cd "readline-${readline_version}"
-  ./configure > /dev/null
-  make -j4 > /dev/null
-  sudo make -s install
-
-  curl -#LO "https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz"
-  tar xf "bash-${bash_version}.tar.gz"
-  cd "bash-${bash_version}"
-  CFLAGS=-DSSH_SOURCE_BASHRC ./configure > /dev/null
-  make -j4 > /dev/null
-  sudo make -s install
+  brew install bash
 
   sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
 }
@@ -48,9 +35,11 @@ install_bash_completion() {
   curl -#LO "https://github.com/scop/bash-completion/releases/download/${bash_completion_version}/bash-completion-${bash_completion_version}.tar.xz"
   tar xf "bash-completion-${bash_completion_version}.tar.xz"
   cd "bash-completion-${bash_completion_version}/"
+  autoreconf -i
   ./configure > /dev/null
   make > /dev/null
   sudo make -s install
+  rm -rf "bash-completion-${bash_completion_version}"*
 }
 
 install_oc() {
@@ -81,6 +70,24 @@ read -p 'git-user: ' git_user
 read -p 'git-email: ' git_email
 read -p 'git-gpg: ' git_gpg
 
+###############################################################################
+# symlink dropbox / dotfiles
+###############################################################################
+mkdir -p ~/.docker ~/".vim/pack/${USER}/opt"
+curl -L#O https://github.com/dracula/vim/archive/master.zip
+unzip master.zip
+mv vim-master ~/".vim/pack/${USER}/opt/dracula"
+rm master.zip
+
+for f in ~/Dropbox/dotfiles/.*; do
+  if [[ "${f: -1}" == "." ]]; then
+    continue
+  fi
+  ln -sf "${f}" ~
+done
+chmod 600 ~/.ssh/id_*
+chmod 644 ~/.ssh/*.pub
+
 ################################################################################
 # install various tools
 ################################################################################
@@ -110,21 +117,23 @@ if [[ ! -f ~/.ssh/id_ed25519 ]]; then
   ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 fi
 
-cat <<'EOF' > ~/.ssh/config
-UseKeychain yes
-IdentityFile ~/.ssh/id_ed25519
+if [[ ! -f ~/.ssh/config ]]; then
+  cat <<'EOF' > ~/.ssh/config
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519
 
-Include ~/.ssh/config.d/*
+  Include ~/.ssh/config.d/*
 
-Host bitbucket.org
-  ControlMaster no
+  Host bitbucket.org
+    ControlMaster no
 
-Host *
-  ControlPath /private/tmp/ssh-%r@%h-%p
-  ControlMaster auto
-  ControlPersist 600
-  ServerAliveInterval 60
+  Host *
+    ControlPath /private/tmp/ssh-%r@%h-%p
+    ControlMaster auto
+    ControlPersist 600
+    ServerAliveInterval 60
 EOF
+fi
 
 ################################################################################
 # setup bash_completion
@@ -140,35 +149,39 @@ if [[ ! -f /usr/local/share/bash-completion/bash_completion ]]; then
   install_bash_completion
 fi
 
-mkdir -p \
-  ~/.bash_completion.d
+if [[ ! -d ~/.bash_completion.d ]]; then
+  mkdir -p \
+    ~/.bash_completion.d
 
-ln -sf "${__DIR__}"/.bash_completion.d/ssh ~/.bash_completion.d/ssh
+  ln -sf "${__DIR__}"/.bash_completion.d/ssh ~/.bash_completion.d/ssh
 
-if command -v oc > /dev/null; then
-  oc completion bash > ~/.bash_completion.d/oc
-fi
+  if command -v oc > /dev/null; then
+    oc completion bash > ~/.bash_completion.d/oc
+  fi
 
-if command -v minishift > /dev/null; then
-  minishift completion bash > ~/.bash_completion.d/minishift
+  if command -v minishift > /dev/null; then
+    minishift completion bash > ~/.bash_completion.d/minishift
+  fi
 fi
 
 install_screenshots
 install_showallfiles
 
 ################################################################################
-# textmate
+# textmate (macos)
 ################################################################################
-if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle ]]; then
-  git clone git@github.com:bomberstudios/Strip-Whitespace-On-Save.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle
-fi
+if [[ "${uname}" == "Darwin" ]]; then
+  if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle ]]; then
+    git clone git@github.com:bomberstudios/Strip-Whitespace-On-Save.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle
+  fi
 
-if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle ]]; then
-  git clone git@github.com:mads-hartmann/Whitespace.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle
-fi
+  if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle ]]; then
+    git clone git@github.com:mads-hartmann/Whitespace.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle
+  fi
 
-if [[ ! -d ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle ]]; then
-  git clone git@github.com:hajder/Ensure-New-Line-at-the-EOF.tmbundle.git ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle
+  if [[ ! -d ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle ]]; then
+    git clone git@github.com:hajder/Ensure-New-Line-at-the-EOF.tmbundle.git ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle
+  fi
 fi
 
 ################################################################################
@@ -182,6 +195,9 @@ dotfiles=(
 )
 
 for dotfile in "${dotfiles[@]}"; do
+  if [[ -f ~/"${dotfile}" ]]; then
+    continue
+  fi
   consolelog "overwriting dotfile ${dotfile}..."
   cp -f "${__DIR__}/${dotfile}" ~/"${dotfile}"
 done
@@ -203,10 +219,13 @@ if [[ ! -z "${git_gpg}" ]]; then
 fi
 
 ################################################################################
-# brew
+# brew (macos)
 ################################################################################
-brew install jq
+if [[ "${uname}" == "Darwin" ]]; then
+  brew install jq
+fi
 
 ################################################################################
-# pip3 install -U pip
-# pip3 install ansible awscli boto3
+# install global as to not be affected by local dirt
+################################################################################
+sudo -H pip3 install ansible awscli boto3

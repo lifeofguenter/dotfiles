@@ -2,8 +2,9 @@
 
 ## Prerequesites
 
-* [git](https://git-scm.com/download/mac)
 * [xcode](https://stackoverflow.com/a/10335943/567193)
+* [brew](https://brew.sh/)
+* [gpg](https://formulae.brew.sh/cask/gpg-suite-no-mail)
 
 ## Installation
 

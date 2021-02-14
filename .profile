@@ -2,15 +2,35 @@
 # .profile for envvars
 # .bashrc for aliases/functions etc.
 
-export CXX="clang -std=c++11 -stdlib=libc++"
+export UNAME="$(uname)"
+if [[ "${UNAME}" == "Darwin" ]]; then
+  export COMPUTER_NAME="$(scutil --get LocalHostName)"
+fi
 
-# https://coderwall.com/p/-k_93g/mac-os-x-valueerror-unknown-locale-utf-8-in-python
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
+export EDITOR=vim
 
-## Android
-export ANDROID_HOME=/opt/android-sdk
-export JAVA_HOME="$(/usr/libexec/java_home)"
+if [[ "${UNAME}" == "Linux" ]]; then
+  # https://wiki.debian.org/Locale
+  #export LC_ALL="en_US.UTF-8"
+  export LC_ADDRESS="de_DE.UTF-8"
+  export LC_COLLATE="de_DE.UTF-8"
+  export LC_CTYPE="de_DE.UTF-8"
+  export LC_MONETARY="de_DE.UTF-8"
+  export LC_MEASUREMENT="de_DE.UTF-8"
+  export LC_PAPER="de_DE.UTF-8"
+  export LC_NUMERIC="de_DE.UTF-8"
+  export LC_TELEPHONE="de_DE.UTF-8"
+  export LC_TIME="de_DE.UTF-8"
+
+  export LANG="en_US.UTF-8"
+  export LANGUAGE="en_US.UTF-8"
+  export LC_RESPONSE="en_US.UTF-8"
+  export LC_MESSAGES="en_US.UTF-8"
+else
+  # https://coderwall.com/p/-k_93g/mac-os-x-valueerror-unknown-locale-utf-8-in-python
+  export LC_ALL=en_US.UTF-8
+  export LANG=en_US.UTF-8
+fi
 
 ## Local
 PATH="/usr/local/sbin:${PATH}"
@@ -29,19 +49,13 @@ PATH="${GOPATH}/bin:${PATH}"
 PATH="${HOME}/.composer/vendor/bin:${PATH}"
 
 ## Python
-PATH="$(python -m site --user-base)/bin:${PATH}"
+PATH="$(python3 -m site --user-base)/bin:${PATH}"
 
 ## Maven
 PATH="/opt/apache-maven-3.5.2/bin:${PATH}"
 
 ## Android-SDK
 PATH="/opt/android-sdk/tools/bin:${PATH}"
-
-# Setting PATH for Python 3.7
-PATH="/Library/Frameworks/Python.framework/Versions/3.7/bin:${PATH}"
-
-# brew coreutils
-#PATH="/usr/local/opt/coreutils/libexec/gnubin:${PATH}"
 
 # Final PATH export
 export PATH="${PATH}"

@@ -16,35 +16,18 @@ trap 'throw_exception' ERR
 # versions
 #
 bash_completion_version=2.11
-minishift_version=1.16.1
+minishift_version=1.34.3
 
 uname="$(uname)"
 
-install_bash() {
-  brew install bash
-
-  sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
-}
-
-install_bash_powerline() {
-  curl -#Lo ~/".bash-powerline.sh" "https://raw.githubusercontent.com/riobard/bash-powerline/master/bash-powerline.sh"
-}
-
-install_bash_completion() {
-  brew install autoconf automake
-
-  cd /tmp
-  curl -#LO "https://github.com/scop/bash-completion/releases/download/${bash_completion_version}/bash-completion-${bash_completion_version}.tar.xz"
-  tar xf "bash-completion-${bash_completion_version}.tar.xz"
-  cd "bash-completion-${bash_completion_version}/"
-  autoreconf -i
-  ./configure > /dev/null
-  make > /dev/null
-  sudo make -s install
-  rm -rf "bash-completion-${bash_completion_version}"*
-
-  mkdir -p ~/.bash_completion.d/
-}
+for installer in "${__DIR__}/installers/"*; do
+  if [[ ! -f "${installer}" ]]; then
+    continue
+  fi
+  consolelog "loading ${installer##*/} ..."
+  source "${installer}"
+done
+echo ""
 
 install_oc() {
   cd /tmp
@@ -60,52 +43,50 @@ install_minishift() {
 
 install_screenshots() {
   mkdir -p ~/Screenshots
-  defaults write com.apple.screencapture location ~/Screenshots
+
+  if [[ "${uname}" == "Darwin" ]]; then
+    defaults write com.apple.screencapture location ~/Screenshots/
+  elif [[ "${uname}" == "Linux" ]]; then
+    gsettings set org.gnome.gnome-screenshot auto-save-directory "file://$HOME/Screenshots/"
+  fi
 }
 
 install_showallfiles() {
+  if [[ "${uname}" != "Darwin" ]]; then
+    return 0
+  fi
   defaults write com.apple.finder AppleShowAllFiles YES
 }
 
 ################################################################################
+# bootstrap
+################################################################################
+if [[ "${uname}" == "Linux" ]]; then
+  sudo apt -qq update
+  sudo apt-get -qqy install curl
+fi
+
+################################################################################
 # user input
 ################################################################################
-read -p 'git-user: ' git_user
-read -p 'git-email: ' git_email
-read -p 'git-gpg: ' git_gpg
+read -rp 'git-user: ' git_user
+read -rp 'git-email: ' git_email
+read -rp 'git-gpg: ' git_gpg
 
 ###############################################################################
 # symlink dropbox / dotfiles
 ###############################################################################
-mkdir -p ~/.docker
-
-if [[ ! -d ~/".vim/pack/${USER}/opt/dracula" ]]; then
-  mkdir -p ~/".vim/pack/${USER}/opt/dracula"
-  curl -L#O https://github.com/dracula/vim/archive/master.zip
-  unzip master.zip
-  mv vim-master ~/".vim/pack/${USER}/opt/dracula"
-  rm master.zip
-fi
-
-if [[ -d ~/Dropbox/dotfiles/ ]]; then
-  for f in ~/Dropbox/dotfiles/.*; do
-    if [[ "${f: -1}" == "." ]]; then
-      continue
-    fi
-    ln -sf "${f}" ~
-  done
-  chmod 600 ~/.ssh/id_*
-  chmod 644 ~/.ssh/*.pub
-fi
+consolelog "installing folders..."
+folder_installer::folders
+folder_installer::dropbox
+vim_installer::vim
 
 ################################################################################
 # install various tools
 ################################################################################
 consolelog "installing tools..."
 
-if [[ ! -f ~/.bash-powerline.sh ]]; then
-  install_bash_powerline
-fi
+bash_installer::powerline
 
 if [[ -n "${DOTFILES_INSTALL_OC}" ]]; then
   install_oc
@@ -150,50 +131,14 @@ EOF
 fi
 
 ################################################################################
-# setup bash_completion
+# setup system
 ################################################################################
-if [[ ! -f "/usr/local/bin/bash" ]]; then
-  consolelog "installing bash..."
-  install_bash
-  chsh -s /usr/local/bin/bash
-fi
-
-if [[ ! -f /usr/local/share/bash-completion/bash_completion ]]; then
-  consolelog "bash-completion not found. installing..."
-  install_bash_completion
-fi
-
-if [[ ! -d ~/.bash_completion.d ]]; then
-  mkdir -p \
-    ~/.bash_completion.d
-
-  if [[ ! -f ~/.bash_completion.d/ssh ]]; then
-    ln -sf "${__DIR__}"/.bash_completion.d/ssh ~/.bash_completion.d/ssh
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/oc ]] && command -v oc > /dev/null; then
-    oc completion bash > ~/.bash_completion.d/oc
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/minishift ]] && command -v minishift > /dev/null; then
-    minishift completion bash > ~/.bash_completion.d/minishift
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/hal ]] && command -v hal > /dev/null; then
-    hal --print-bash-completion > ~/.bash_completion.d/hal
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/kubectl ]] && command -v kubectl > /dev/null; then
-    kubectl completion bash > ~/.bash_completion.d/kubectl
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/minikube ]] && command -v minikube > /dev/null; then
-    minikube completion bash > ~/.bash_completion.d/minikube
-  fi
-fi
+bash_installer::bash
+bash_installer::bash_completion
 
 install_screenshots
 install_showallfiles
+system_installer::locale
 
 ################################################################################
 # textmate (macos)
@@ -213,7 +158,7 @@ if [[ "${uname}" == "Darwin" ]]; then
 fi
 
 ################################################################################
-# dotfiles overwrite
+# dotfiles copy-over
 ################################################################################
 dotfiles=(
   .bash_profile
@@ -223,25 +168,26 @@ dotfiles=(
 )
 
 for dotfile in "${dotfiles[@]}"; do
+  # todo: only check if symlink
   if [[ -f ~/"${dotfile}" ]]; then
     continue
   fi
-  consolelog "overwriting dotfile ${dotfile}..."
-  cp -f "${__DIR__}/${dotfile}" ~/"${dotfile}"
+  consolelog "copying dotfile ${dotfile}..."
+  cp "${__DIR__}/${dotfile}" ~/"${dotfile}"
 done
 
 ################################################################################
 # git
 ################################################################################
-if [[ ! -z "${git_email}" ]]; then
+if [[ -n "${git_email}" ]]; then
   git config --global user.email "${git_email}"
 fi
 
-if [[ ! -z "${git_user}" ]]; then
+if [[ -n "${git_user}" ]]; then
   git config --global user.name "${git_user}"
 fi
 
-if [[ ! -z "${git_gpg}" ]]; then
+if [[ -n "${git_gpg}" ]]; then
   git config --global commit.gpgsign true
   git config --global user.signingkey "${git_gpg}"
 fi
@@ -256,9 +202,15 @@ if [[ "${uname}" == "Darwin" ]]; then
   ln -sf /usr/local/opt/make/libexec/gnubin/make /usr/local/bin/make
 
   defaults write -g ApplePressAndHoldEnabled -bool true
+elif [[ "${uname}" == "Linux" ]]; then
+  mkdir -p ~/.local/bin
+  git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+  ln -s ~/.tfenv/bin/* ~/.local/bin
 fi
 
 ################################################################################
 # pip
 ################################################################################
 pip3 install --user ansible awscli boto3
+
+xsel sshpass

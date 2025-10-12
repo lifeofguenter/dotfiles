@@ -10,34 +10,12 @@ bash_installer::_bash_completion_install() {
     return 0
   fi
 
-  brew install autoconf automake
-
-  cd /tmp
-  curl -#LO "https://github.com/scop/bash-completion/releases/download/${bash_completion_version}/bash-completion-${bash_completion_version}.tar.xz"
-  tar xf "bash-completion-${bash_completion_version}.tar.xz"
-  cd "bash-completion-${bash_completion_version}/"
-  autoreconf -i
-  ./configure > /dev/null
-  make > /dev/null
-  sudo make -s install
-  rm -rf "bash-completion-${bash_completion_version}"*
+  brew install bash-completion@2
 }
 
 bash_installer::_bash_completion_setup() {
   if [[ ! -f ~/.bash_completion.d/ssh ]]; then
     ln -sf "${__DIR__}"/.bash_completion.d/ssh ~/.bash_completion.d/ssh
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/oc ]] && command -v oc > /dev/null; then
-    oc completion bash > ~/.bash_completion.d/oc
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/minishift ]] && command -v minishift > /dev/null; then
-    minishift completion bash > ~/.bash_completion.d/minishift
-  fi
-
-  if [[ ! -f ~/.bash_completion.d/hal ]] && command -v hal > /dev/null; then
-    hal --print-bash-completion > ~/.bash_completion.d/hal
   fi
 
   if [[ ! -f ~/.bash_completion.d/kubectl ]] && command -v kubectl > /dev/null; then
@@ -50,10 +28,7 @@ bash_installer::_bash_completion_setup() {
 }
 
 bash_installer::powerline() {
-  if [[ -f ~/.bash-powerline.sh ]]; then
-    return 0
-  fi
-  curl -#Lo ~/".bash-powerline.sh" "https://raw.githubusercontent.com/riobard/bash-powerline/master/bash-powerline.sh"
+  brew install powerline-go font-hack-nerd-font
 }
 
 bash_installer::bash_completion() {
@@ -71,6 +46,6 @@ bash_installer::bash() {
   fi
 
   brew install bash
-  sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells'
-  chsh -s /usr/local/bin/bash
+  sudo bash -c 'echo /opt/homebrew/bin/bash >> /etc/shells'
+  chsh -s /opt/homebrew/bin/bash
 }

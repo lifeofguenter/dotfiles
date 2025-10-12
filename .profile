@@ -73,16 +73,6 @@ export PATH="${PATH}"
 # Homes
 ###############################################################
 
-## Android
-export ANDROID_HOME=/opt/android-sdk
-
-## Java
-if [[ -f /usr/libexec/java_home ]]; then
-  export JAVA_HOME="$(/usr/libexec/java_home)"
-elif [[ -f /etc/alternatives/java ]]; then
-  export JAVA_HOME="$(dirname "$(dirname "$(realpath /etc/alternatives/java)")")"
-fi
-
 ## Rust
 if [[ -f "${HOME}/.cargo/env" ]]; then
   source "${HOME}/.cargo/env"

@@ -15,8 +15,6 @@ trap 'throw_exception' ERR
 #
 # versions
 #
-bash_completion_version=2.11
-minishift_version=1.34.3
 
 uname="$(uname)"
 
@@ -28,18 +26,6 @@ for installer in "${__DIR__}/installers/"*; do
   source "${installer}"
 done
 echo ""
-
-install_oc() {
-  cd /tmp
-  curl -#LO "https://github.com/openshift/origin/releases/download/v3.9.0/openshift-origin-client-tools-v3.9.0-191fece-mac.zip"
-  unzip -q openshift-origin-client-tools-v3.9.0-191fece-mac.zip
-}
-
-install_minishift() {
-  cd /tmp
-  curl -#LO "https://github.com/minishift/minishift/releases/download/v${minishift_version}/minishift-${minishift_version}-darwin-amd64.tgz"
-  tar xf "minishift-${minishift_version}-darwin-amd64.tgz"
-}
 
 install_screenshots() {
   mkdir -p ~/Screenshots
@@ -78,7 +64,7 @@ read -rp 'git-gpg: ' git_gpg
 ###############################################################################
 consolelog "installing folders..."
 folder_installer::folders
-folder_installer::dropbox
+# folder_installer::dropbox
 vim_installer::vim
 
 ################################################################################
@@ -87,14 +73,6 @@ vim_installer::vim
 consolelog "installing tools..."
 
 bash_installer::powerline
-
-if [[ -n "${DOTFILES_INSTALL_OC}" ]]; then
-  install_oc
-fi
-
-if [[ -n "${DOTFILES_INSTALL_MINISHIFT}" ]]; then
-  install_minishift
-fi
 
 ################################################################################
 # setup ssh
@@ -108,9 +86,9 @@ if [[ ! -f ~/.ssh/id_ed25519 ]]; then
   ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -C "${git_email}"
 fi
 
-if [[ ! -f ~/.ssh/id_rsa ]]; then
-  ssh-keygen -m PEM -a 100 -t rsa -b 4096 -f ~/.ssh/id_rsa -C "${git_email}"
-fi
+# if [[ ! -f ~/.ssh/id_rsa ]]; then
+#   ssh-keygen -m PEM -a 100 -t rsa -b 4096 -f ~/.ssh/id_rsa -C "${git_email}"
+# fi
 
 if [[ ! -f ~/.ssh/config ]]; then
   cat <<'EOF' > ~/.ssh/config
@@ -138,24 +116,7 @@ bash_installer::bash_completion
 
 install_screenshots
 install_showallfiles
-system_installer::locale
-
-################################################################################
-# textmate (macos)
-################################################################################
-if [[ "${uname}" == "Darwin" ]]; then
-  if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle ]]; then
-    git clone https://github.com/bomberstudios/Strip-Whitespace-On-Save.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Strip-Whitespace-On-Save.tmbundle
-  fi
-
-  if [[ ! -d ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle ]]; then
-    git clone https://github.com/mads-hartmann/Whitespace.tmbundle.git ~/Library/Application\ Support/TextMate/Bundles/Whitespace.tmbundle
-  fi
-
-  if [[ ! -d ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle ]]; then
-    git clone https://github.com/hajder/Ensure-New-Line-at-the-EOF.tmbundle.git ~/Library/Application\ Support/Textmate/Bundles/Ensure-New-Line-at-the-EOF.tmbundle
-  fi
-fi
+# system_installer::locale
 
 ################################################################################
 # dotfiles copy-over
@@ -196,12 +157,21 @@ fi
 # brew (macos)
 ################################################################################
 if [[ "${uname}" == "Darwin" ]]; then
-  brew install git jq tfenv wget gettext make gh python3 nvm yarn --without-node
+  brew install \
+    git \
+    jq \
+    tfenv \
+    wget \
+    gettext \
+    make \
+    ansible \
+    awscli \
+    watch
 
-  ln -sf /usr/local/opt/gettext/bin/envsubst /usr/local/bin/envsubst
-  ln -sf /usr/local/opt/make/libexec/gnubin/make /usr/local/bin/make
+  # ln -sf /usr/local/opt/gettext/bin/envsubst /usr/local/bin/envsubst
+  # ln -sf /usr/local/opt/make/libexec/gnubin/make /usr/local/bin/make
 
-  defaults write -g ApplePressAndHoldEnabled -bool true
+  # defaults write -g ApplePressAndHoldEnabled -bool true
 elif [[ "${uname}" == "Linux" ]]; then
   mkdir -p ~/.local/bin
   git clone https://github.com/tfutils/tfenv.git ~/.tfenv
@@ -211,6 +181,6 @@ fi
 ################################################################################
 # pip
 ################################################################################
-pip3 install --user ansible awscli boto3
+# pip3 install --user ansible awscli boto3
 
-xsel sshpass
+# xsel sshpass

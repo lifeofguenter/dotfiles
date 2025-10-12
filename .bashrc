@@ -170,7 +170,7 @@ dotenv() {
 
 _update_ps1() {
   PS1="$(powerline-go \
-  	   -shell bash \
+           -shell bash \
            -theme gruvbox \
            -cwd-max-depth 1 \
            -modules venv,host,ssh,cwd,perms,git,jobs,exit,kube,root \
